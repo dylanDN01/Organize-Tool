@@ -1,14 +1,24 @@
-import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
-import { GestureHandlerRootView, NativeViewGestureHandler, TouchableOpacity } from 'react-native-gesture-handler';
+import React, {useState} from 'react';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 const Task = (task) => {
+
+    const [checked, setChecked] = useState(false);
+
+    // enable checkbox
+    const handleSetCheck = () => {
+        setChecked(!checked);
+    };
+
     return (
         <View style = {styles.item}>
-            <GestureHandlerRootView style = {styles.itemLeft}>
-                <TouchableOpacity style = {styles.checkBox}></TouchableOpacity>
+            <View style = {styles.itemLeft}>
+                <TouchableOpacity style = {styles.checkBox} onPress={() => handleSetCheck()}>
+                    {checked && <Text style = {styles.check}>✓</Text>}
+                </TouchableOpacity>
+             
                 <Text style = {styles.itemText}>{task.text}</Text>
-            </GestureHandlerRootView>
+            </View>   
 
             <View style = {styles.circular}>
 
@@ -22,6 +32,12 @@ export default Task;
 
 
 const styles = StyleSheet.create({
+    check: {
+        fontSize: 20,
+        color: 'black',
+        fontWeight: 'bold',
+    },
+
     item: {
         backgroundColor: 'white',
         padding: 15,
@@ -38,15 +54,18 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap'
     },
     checkBox: {
-        width: 24,
-        height: 24,
+        width: 32,
+        height: 32,
         backgroundColor: 'lightgray',
+        justifyContent: 'center',
+        alignItems: 'center',
         opacity: 0.4,
         borderRadius: 6,
         marginRight: 15,
     },
     itemText: {
         maxWidth: '80%',
+        fontSize: 15
     },
     circular: {
         width: 12,

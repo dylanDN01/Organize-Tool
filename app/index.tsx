@@ -13,6 +13,7 @@ export default function Index() {
 
   const [taskItems, setTaskItems] = useState<Array<string>>([]);
 
+  var selecting = false; // for doing action on tasks
 
   const handleAddTask = () => {
     Keyboard.dismiss();
@@ -22,6 +23,7 @@ export default function Index() {
   }
 
   const editTask = (index: any) => {
+    selecting = true;
     console.log(taskItems.at(index))
   }
 
@@ -37,7 +39,7 @@ export default function Index() {
         {/* item is the default for objects in array, index is default for index*/}
         {taskItems.map((item, index) => {
           return (
-            <Pressable key={index} onPress={() => editTask(index)}>
+            <Pressable key={index} onLongPress={() => editTask(index)}>
               <Task text={item} />
             </Pressable>
             
@@ -69,6 +71,10 @@ export default function Index() {
 
         </KeyboardAvoidingView>
       </GestureHandlerRootView>
+
+      <View>
+        
+      </View>
     </View>
   );
 }
