@@ -1,17 +1,20 @@
 export {};
-import React, {useState} from 'react';
-import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Pressable} from 'react-native';
+import React, {createContext, useState} from 'react';
+import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard} from 'react-native';
 
 import Task from '../components/task.js';
 
 const screenWidth = Dimensions.get('screen').width;
 const screenHeight = Dimensions.get('screen').height;
 
+
 import settingsIcon from '../assets/images/Gear-icon.png'
 import trashIcon from '../assets/images/trash-bin.png'
 import checkIcon from '../assets/images/check-all.png'
 import cancelIcon from '../assets/images/cancel.png'
 import selectAllIcon from '../assets/images/select-all.png'
+import editIcon from '../assets/images/edit-icon.png'
+
 
 export default function Index() {
   const [task, setTask] = useState(""); // add tasks
@@ -25,7 +28,10 @@ export default function Index() {
   const [selecting, setSelecting] = useState(false); // for press and hold to select state
 
   const [checkAll, setCheckAll] = useState<any[]>([]); // for checking all selected items
-  
+
+  const [selectedIndex, setSelectedIndex] = useState(-1); // for modifying text
+
+  const [isEditingText, setIsEditingText] = useState(false); // for opening text box
 
   const handleViewSettings = () => {
     Keyboard.dismiss();
@@ -57,17 +63,29 @@ export default function Index() {
   }
 
 
+  const modifyText = (task: string) => {
+    // if there is a selected item
+    if (selectedIndex !== -1) {
+      taskItems[selectedIndex] = task
+    }
+    cancel()
+    
+    
+  }
+
 
   // this function will highlight the task, add options at the top to delete,rename, etc,
   // renaming option is removed when more than 1 task is highlighted
   const editTask = (index: any) => {
     if (!selecting) {
       setSelecting(true)
+      setSelectedIndex(index); // for editing text
     }
     if (!selectedItems.includes(index)){
       setSelectedItems(selectedItems => ([...selectedItems, index]))
-    }
+    }   
   }
+  
   
   // adds or removes by value (which is an index)
   const addRemoveSelected = (value: any) => {
@@ -91,7 +109,10 @@ export default function Index() {
 
   const cancel = () => {
     setSelectedItems([]);
+    setSelectedIndex(-1);
+    setIsEditingText(false);
     setSelecting(false);    
+    setTask("");
   }
 
   const deleteAll = (toDelete: Array<any>) => {
@@ -108,17 +129,53 @@ export default function Index() {
       setCheckAll([]);
     }
   }
+  const handleSetCheck = (indexValue: any) => {
+    AddRemoveByValue(checkAll, setCheckAll, indexValue);
+  }
+
+  const AddRemoveByValue = (arrayInput: any[], setterFunction: any, value: any) => {
+    if (arrayInput.includes(value)) {
+      let arraycopy = [...arrayInput];
+      let indexToRemove = arraycopy.indexOf(value);
+      arraycopy.splice(indexToRemove, 1);
+      setterFunction([...arraycopy]);
+    }
+    else{
+      setterFunction([...arrayInput, value]);
+    }
+  }
 
 
 
   return (
     <View style = {styles.container} >
       {/* Todays Tasks */}
+      {(selectedIndex !== -1 && isEditingText) && 
+      <View style = {styles.renameBox}>
+        <TextInput placeholder='Rename Task...' onChangeText={text => setTask(text)}/>
+
+        <TouchableOpacity onPress={() => modifyText(task)} 
+        style = {styles.actionButtonModify && {...styles.actionButtonModify,
+                           backgroundColor: 'lightgreen', left: 0}}>
+          <Text>
+            Save
+          </Text>
+        </TouchableOpacity> 
+      
+        <TouchableOpacity onPress={() => cancel()} 
+                          style = {styles.actionButtonModify && {...styles.actionButtonModify,
+                           backgroundColor: '#FF474C', right: 0}}>
+          <Text>
+            Cancel
+          </Text>
+        </TouchableOpacity>
+
+      </View>}
 
       <View style = {styles.taskWrapper}>
         <View style = {styles.header}>
 
-          <Text style = {styles.sectionTitle}>dfdf</Text>
+          <Text style = {styles.sectionTitle}>List</Text>
 
           {selecting && <View style = {styles.selectOptions}>
             <TouchableOpacity onPress = {() => deleteAll(selectedItems)} style = {{alignItems: 'center'}}>
@@ -136,11 +193,15 @@ export default function Index() {
               <Text>Check</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress = {() => cancel()}style = {{alignItems: 'center'}}>
+            <TouchableOpacity onPress = {() => cancel()} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {cancelIcon}/>
               <Text>Cancel</Text>
             </TouchableOpacity>
-
+            
+            {(selectedItems.length === 1) && <TouchableOpacity onPress = {() => setIsEditingText(true)} style = {{alignItems: 'center'}}>
+              <Image style = {styles.selectingToolIcon} source = {editIcon}></Image>
+              <Text>Edit</Text>
+            </TouchableOpacity>}
 
           </View>}
 
@@ -168,37 +229,40 @@ export default function Index() {
               </View>
               <View style = {styles.settingsOption}>
                 <Text>
-                  Reset All
-                </Text>
-              </View>
-              <View style = {styles.settingsOption}>
-                <Text>
-                  Check 
+                  Hide Add Task 
                 </Text>
               </View>
             </View>
           </TouchableWithoutFeedback>)}
         </View>
 
-        <View style = {styles.items}>
+        <ScrollView style = {styles.items}>
 
-        {/* item is the default for objects in array, index is default for index*/}
-        {taskItems.map((item, index) => {
-          return (
-            <TouchableOpacity key={index} 
-              onLongPress={() => editTask(index)} 
-              onPress={() => addRemoveSelected(index)} 
-              style = {selectedItems.includes(index) && styles.selectedItem}
+          {/* item is the default for objects in array, index is default for index*/}
+          {taskItems.map((item, index) => {
+            return (
               
-              >
-              <Task task={item} isChecked = {checkAll.includes(index)} />
-            </TouchableOpacity>
-          );
-        }    
+              <TouchableOpacity key={index} 
+                onLongPress={() => editTask(index)} 
+                onPress={() => addRemoveSelected(index)} 
+                style = {selectedItems.includes(index) && styles.selectedItem}
+                
+                >
+                  
+                  <Task checkBoxDisplay = {
+                    <TouchableOpacity style = {styles.checkBox} onPress={() => handleSetCheck(index)}>
+                      {(checkAll.includes(index)) && <Text style = {styles.check}>✓</Text>}
+                    </TouchableOpacity>} 
+                  task={item}/>
+              </TouchableOpacity>
 
-        )}
 
-        </View>
+            );
+          }    
+
+          )}
+
+        </ScrollView>
       </View>
 
       {/* Create tasks */}
@@ -226,6 +290,40 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  actionButtonModify: {
+    position: 'absolute', 
+    padding: 2, 
+    bottom: 0,
+    alignItems: 'center',
+    width: screenWidth * 0.3
+  },
+  renameBox: {
+    position: 'absolute',
+    top: screenHeight * 0.06,
+    left: screenWidth * 0.03,
+    width: screenWidth * 0.95,
+    height: screenHeight * 0.08,
+    zIndex: 998,
+    backgroundColor: 'white',
+    borderColor: 'black',
+    borderWidth: 6,
+    borderRadius: 8,
+  },
+  check: {
+    fontSize: 20,
+    color: 'black',
+    fontWeight: 'bold',
+},
+  checkBox: {
+    width: 32,
+    height: 32,
+    backgroundColor: 'lightgray',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.4,
+    borderRadius: 6,
+    marginRight: 15,
+},
   selectingToolIcon: {
     height: 30,
     width: 30,
@@ -249,7 +347,10 @@ const styles = StyleSheet.create({
   settingsOption: {
     backgroundColor: 'white',
     borderRadius: 5,
-    
+    width: '50%',
+    height: '5%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   exitStyle: {
     fontWeight: 'bold',
@@ -265,13 +366,14 @@ const styles = StyleSheet.create({
 
     position: 'absolute',
 
-    right: 0
+    right: 0,
+    top: 0
   },
   viewOptions: {
     backgroundColor: 'lightgrey',
     borderRadius: 10,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     flexDirection: 'column',
     width: '100%',
     height: screenHeight * 0.85,
@@ -341,5 +443,6 @@ const styles = StyleSheet.create({
   items: {
     marginHorizontal: screenWidth * 0.02,
     marginVertical: screenHeight * 0.03,
+    marginBottom: screenHeight * 0.15,
   },
 });
