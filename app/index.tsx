@@ -34,6 +34,9 @@ export default function Index() {
 
   const [isEditingText, setIsEditingText] = useState(false); // for opening text box
 
+
+  const [isShiftingPriority, setIsShiftingPriority] = useState(false); // for shifting priority
+
   const handleViewSettings = () => {
     Keyboard.dismiss();
     setViewSettings(true);
@@ -78,6 +81,10 @@ export default function Index() {
   // this function will highlight the task, add options at the top to delete,rename, etc,
   // renaming option is removed when more than 1 task is highlighted
   const editTask = (index: any) => {
+    if (isShiftingPriority){
+      setIsShiftingPriority(false);
+    }
+    
     if (!selecting) {
       setSelecting(true)
       setSelectedIndex(index); // for editing text
@@ -108,12 +115,14 @@ export default function Index() {
     }
   }
 
+
   const cancel = () => {
     setSelectedItems([]); // set selection to none
     setSelectedIndex(-1); // change selected item to none
     setIsEditingText(false); // remove edit text box
     setSelecting(false);   // exit selection mode
     setTask(""); // reset typed tasks
+    setIsShiftingPriority(false);
   }
 
   const deleteAll = (toDelete: Array<any>) => {
@@ -148,8 +157,33 @@ export default function Index() {
 
   const shiftItem = (indexOld: any, indexNew: any) => {
     let tasksCopy = [...taskItems];
+    
+    if (indexNew > -1 && indexNew < taskItems.length){
+      let tempTask = tasksCopy[indexNew];
+      tasksCopy[indexNew] = tasksCopy[indexOld];
+      tasksCopy[indexOld] = tempTask;
 
+      setSelectedIndex(indexNew);
+    }
+
+    setTaskItems(tasksCopy);
+
+    
   }
+
+  const handleSetShiftingIndex = (index: any) => {
+
+    if (!isShiftingPriority) {
+      setIsShiftingPriority(true);
+      setSelectedIndex(index);
+    }
+    else{
+      setIsShiftingPriority(false);
+      cancel();
+    }
+  }
+
+  
 
 
   return (
@@ -177,18 +211,24 @@ export default function Index() {
 
       </View>}
 
-      <View style = {styles.shiftOptionsBox}>
+      {(isShiftingPriority) && <View style = {styles.shiftOptionsBox}>
 
-        <TouchableOpacity style = {{alignItems: 'center'}}>
+        <TouchableOpacity onPress = {() => shiftItem(selectedIndex, selectedIndex -1)} style = {{alignItems: 'center'}}>
           <Image source = {upArrow} style = {styles.selectingToolIcon}/>
           <Text>Move Up</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style = {{alignItems: 'center'}}>
+        <TouchableOpacity onPress = {() => shiftItem(selectedIndex, selectedIndex + 1)} style = {{alignItems: 'center'}}>
           <Image source = {downArrow} style = {styles.selectingToolIcon}/>
           <Text>Move Down</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity onPress = {() => cancel()} style = {{alignItems: 'center'}}>
+              <Image style = {styles.selectingToolIcon} source = {cancelIcon}/>
+              <Text>Cancel</Text>
+        </TouchableOpacity>
       </View>
+      }
 
       <View style = {styles.taskWrapper}>
         <View style = {styles.header}>
@@ -196,7 +236,7 @@ export default function Index() {
           <Text style = {styles.sectionTitle}>List</Text>
 
           {selecting && <View style = {styles.selectOptions}>
-            
+
             {(selectedItems.length === 1) && <TouchableOpacity onPress = {() => setIsEditingText(true)} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {editIcon}></Image>
               <Text>Edit</Text>
@@ -266,15 +306,21 @@ export default function Index() {
               <TouchableOpacity key={index} 
                 onLongPress={() => editTask(index)} 
                 onPress={() => addRemoveSelected(index)} 
-                style = {selectedItems.includes(index) && styles.selectedItem}
-                
+                style = {(selectedItems.includes(index) && styles.selectedItem) || (isShiftingPriority && selectedIndex === index && styles.shiftingTask)}
                 >
                   
-                  <Task checkBoxDisplay = {
+                  <Task 
+                  checkBoxDisplay = {
                     <TouchableOpacity style = {styles.checkBox} onPress={() => handleSetCheck(index)}>
                       {(checkAll.includes(index)) && <Text style = {styles.check}>✓</Text>}
                     </TouchableOpacity>} 
+                    
+                  shiftIconDisplay={<TouchableOpacity style = {styles.circular}
+                                    onLongPress={() => handleSetShiftingIndex(index)}/>}
+
                   task={item}/>
+
+                  
               </TouchableOpacity>
 
 
@@ -305,12 +351,22 @@ export default function Index() {
       </KeyboardAvoidingView>
 
 
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  shiftingTask: {
+    borderWidth: 3,
+    borderColor: 'orange',
+  },
+  circular: {
+    width: 25,
+    height: 35,
+    borderColor: 'lightgray',
+    borderWidth: 3,
+    borderRadius: 6
+},
   shiftOptionsBox: {
     position: 'absolute',
     flexDirection: 'row',
@@ -319,7 +375,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 6,
     borderWidth: 3,
-    width: '40%',
+    width: '50%',
     height: screenHeight * 0.06,
     left: '30%',
     top: '8%',

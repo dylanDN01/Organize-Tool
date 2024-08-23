@@ -2,7 +2,9 @@ import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 
-    const Task = ({checkBoxDisplay, task}) => {
+const Task = ({checkBoxDisplay, shiftIconDisplay, task}) => {
+
+    
     
     return (
         <View style = {styles.item}>
@@ -11,7 +13,7 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
                 <Text style = {styles.itemText}>{task}</Text>
             </View>   
 
-            <TouchableOpacity style = {styles.circular}/>
+            {shiftIconDisplay}
             
         </View>
     );
@@ -43,11 +45,5 @@ const styles = StyleSheet.create({
         maxWidth: '80%',
         fontSize: 15,
     },
-    circular: {
-        width: 25,
-        height: 35,
-        borderColor: 'lightgray',
-        borderWidth: 3,
-        borderRadius: 6
-    },
+
 });
