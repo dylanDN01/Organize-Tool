@@ -14,7 +14,8 @@ import checkIcon from '../assets/images/check-all.png'
 import cancelIcon from '../assets/images/cancel.png'
 import selectAllIcon from '../assets/images/select-all.png'
 import editIcon from '../assets/images/edit-icon.png'
-
+import upArrow from '../assets/images/uparrow.png'
+import downArrow from '../assets/images/downarrow.png'
 
 export default function Index() {
   const [task, setTask] = useState(""); // add tasks
@@ -108,11 +109,11 @@ export default function Index() {
   }
 
   const cancel = () => {
-    setSelectedItems([]);
-    setSelectedIndex(-1);
-    setIsEditingText(false);
-    setSelecting(false);    
-    setTask("");
+    setSelectedItems([]); // set selection to none
+    setSelectedIndex(-1); // change selected item to none
+    setIsEditingText(false); // remove edit text box
+    setSelecting(false);   // exit selection mode
+    setTask(""); // reset typed tasks
   }
 
   const deleteAll = (toDelete: Array<any>) => {
@@ -145,6 +146,10 @@ export default function Index() {
     }
   }
 
+  const shiftItem = (indexOld: any, indexNew: any) => {
+    let tasksCopy = [...taskItems];
+
+  }
 
 
   return (
@@ -172,16 +177,30 @@ export default function Index() {
 
       </View>}
 
+      <View style = {styles.shiftOptionsBox}>
+
+        <TouchableOpacity style = {{alignItems: 'center'}}>
+          <Image source = {upArrow} style = {styles.selectingToolIcon}/>
+          <Text>Move Up</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style = {{alignItems: 'center'}}>
+          <Image source = {downArrow} style = {styles.selectingToolIcon}/>
+          <Text>Move Down</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style = {styles.taskWrapper}>
         <View style = {styles.header}>
 
           <Text style = {styles.sectionTitle}>List</Text>
 
           {selecting && <View style = {styles.selectOptions}>
-            <TouchableOpacity onPress = {() => deleteAll(selectedItems)} style = {{alignItems: 'center'}}>
-              <Image style = {styles.selectingToolIcon} source = {trashIcon}></Image>
-              <Text>Delete</Text>
-            </TouchableOpacity>
+            
+            {(selectedItems.length === 1) && <TouchableOpacity onPress = {() => setIsEditingText(true)} style = {{alignItems: 'center'}}>
+              <Image style = {styles.selectingToolIcon} source = {editIcon}></Image>
+              <Text>Edit</Text>
+            </TouchableOpacity>}
 
             <TouchableOpacity onPress ={() => handleSelectAll()} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {selectAllIcon}/>
@@ -198,10 +217,12 @@ export default function Index() {
               <Text>Cancel</Text>
             </TouchableOpacity>
             
-            {(selectedItems.length === 1) && <TouchableOpacity onPress = {() => setIsEditingText(true)} style = {{alignItems: 'center'}}>
-              <Image style = {styles.selectingToolIcon} source = {editIcon}></Image>
-              <Text>Edit</Text>
-            </TouchableOpacity>}
+
+
+            <TouchableOpacity onPress = {() => deleteAll(selectedItems)} style = {{alignItems: 'center'}}>
+              <Image style = {styles.selectingToolIcon} source = {trashIcon}></Image>
+              <Text>Delete</Text>
+            </TouchableOpacity>
 
           </View>}
 
@@ -229,7 +250,7 @@ export default function Index() {
               </View>
               <View style = {styles.settingsOption}>
                 <Text>
-                  Hide Add Task 
+                  None
                 </Text>
               </View>
             </View>
@@ -290,6 +311,19 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  shiftOptionsBox: {
+    position: 'absolute',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 3,
+    backgroundColor: 'white',
+    borderRadius: 6,
+    borderWidth: 3,
+    width: '40%',
+    height: screenHeight * 0.06,
+    left: '30%',
+    top: '8%',
+  },
   actionButtonModify: {
     position: 'absolute', 
     padding: 2, 

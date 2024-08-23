@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 
@@ -11,9 +11,7 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
                 <Text style = {styles.itemText}>{task}</Text>
             </View>   
 
-            <View style = {styles.circular}>
-
-            </View>
+            <TouchableOpacity style = {styles.circular}/>
             
         </View>
     );
@@ -46,8 +44,8 @@ const styles = StyleSheet.create({
         fontSize: 15,
     },
     circular: {
-        width: 12,
-        height: 12,
+        width: 25,
+        height: 35,
         borderColor: 'lightgray',
         borderWidth: 3,
         borderRadius: 6
