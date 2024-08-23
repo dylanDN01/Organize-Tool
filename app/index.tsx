@@ -1,4 +1,4 @@
-
+export {};
 import React, {useState} from 'react';
 import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Pressable} from 'react-native';
 
@@ -11,6 +11,7 @@ import settingsIcon from '../assets/images/Gear-icon.png'
 import trashIcon from '../assets/images/trash-bin.png'
 import checkIcon from '../assets/images/check-all.png'
 import cancelIcon from '../assets/images/cancel.png'
+import selectAllIcon from '../assets/images/select-all.png'
 
 export default function Index() {
   const [task, setTask] = useState(""); // add tasks
@@ -23,7 +24,7 @@ export default function Index() {
 
   const [selecting, setSelecting] = useState(false); // for press and hold to select state
 
-  const [checkAll, setCheckAll] = useState<boolean>(false);
+  const [checkAll, setCheckAll] = useState<any[]>([]); // for checking all selected items
   
 
   const handleViewSettings = () => {
@@ -37,10 +38,22 @@ export default function Index() {
   }
 
   const handleAddTask = () => {
-    Keyboard.dismiss();
-    setTaskItems([...taskItems, task]); 
-    setTask("");
+    if (task.length != 0) {
+      Keyboard.dismiss();
+      setTaskItems([...taskItems, task]); 
+      setTask("");
+    }
+  }
 
+  const handleSelectAll = () => {
+    // select all items if all items are not selected
+    // unselec all items otherwise
+    if (selectedItems.length != taskItems.length){
+      setSelectedItems( Array.from({ length: taskItems.length }, (_, i) => i));
+    }
+    else{
+      setSelectedItems([]);
+    }
   }
 
 
@@ -56,12 +69,12 @@ export default function Index() {
     }
   }
   
-
-  const addRemoveSelected = (index: any) => {
+  // adds or removes by value (which is an index)
+  const addRemoveSelected = (value: any) => {
     if (selecting) {
-      if (selectedItems.includes(index)){
+      if (selectedItems.includes(value)){
         let selectedCopy = [...selectedItems];
-        let itemToRemove = selectedCopy.indexOf(index);
+        let itemToRemove = selectedCopy.indexOf(value);
         selectedCopy.splice(itemToRemove, 1);
         setSelectedItems([...selectedCopy]);
 
@@ -70,8 +83,8 @@ export default function Index() {
           cancel();
         }
       }
-      else if (!selectedItems.includes(index)) {
-        setSelectedItems(selectedItems => ([...selectedItems, index]));
+      else if (!selectedItems.includes(value)) {
+        setSelectedItems(selectedItems => ([...selectedItems, value]));
       }
     }
   }
@@ -87,6 +100,15 @@ export default function Index() {
     cancel();
   }
 
+  const handleCheckAll = () =>{
+    if(!(selectedItems.every(item => checkAll.includes(item)))) {
+      setCheckAll(selectedItems);
+    }
+    else {
+      setCheckAll([]);
+    }
+  }
+
 
 
   return (
@@ -96,23 +118,30 @@ export default function Index() {
       <View style = {styles.taskWrapper}>
         <View style = {styles.header}>
 
-          <Text style = {styles.sectionTitle}>List</Text>
+          <Text style = {styles.sectionTitle}>dfdf</Text>
 
           {selecting && <View style = {styles.selectOptions}>
             <TouchableOpacity onPress = {() => deleteAll(selectedItems)} style = {{alignItems: 'center'}}>
-              <Image style = {{height: 40, width: 40}}source = {trashIcon}></Image>
+              <Image style = {styles.selectingToolIcon} source = {trashIcon}></Image>
               <Text>Delete</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity onPress ={() => handleSelectAll()} style = {{alignItems: 'center'}}>
+              <Image style = {styles.selectingToolIcon} source = {selectAllIcon}/>
+              <Text>Select All</Text>
+            </TouchableOpacity>
             
-            <TouchableOpacity onPress = {() => setCheckAll(!checkAll)} style = {{alignItems: 'center'}}>
-              <Image style = {{height: 40, width: 40}}source = {checkIcon}/>
-              <Text>Check All</Text>
+            <TouchableOpacity onPress = {() => handleCheckAll()} style = {{alignItems: 'center'}}>
+              <Image style = {styles.selectingToolIcon} source = {checkIcon}/>
+              <Text>Check</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress = {() => cancel()}style = {{alignItems: 'center'}}>
-              <Image style = {{height: 40, width: 40}} source = {cancelIcon}/>
+              <Image style = {styles.selectingToolIcon} source = {cancelIcon}/>
               <Text>Cancel</Text>
             </TouchableOpacity>
+
+
           </View>}
 
 
@@ -162,7 +191,7 @@ export default function Index() {
               style = {selectedItems.includes(index) && styles.selectedItem}
               
               >
-              <Task task={item} isChecked = {checkAll} />
+              <Task task={item} isChecked = {checkAll.includes(index)} />
             </TouchableOpacity>
           );
         }    
@@ -197,10 +226,21 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  selectingToolIcon: {
+    height: 30,
+    width: 30,
+  },
   selectOptions: {
     flexDirection: 'row',
-    width: '50%',
-    justifyContent: 'space-between'
+    width: '70%',
+    justifyContent: 'space-between',
+    position: 'absolute',
+    left: '15%',
+    backgroundColor: 'white',
+    padding: 4,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: 'blue'
   },
   selectedItem: {
     borderWidth: 3,
@@ -224,7 +264,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
 
     position: 'absolute',
-    right: 0,
+
+    right: 0
   },
   viewOptions: {
     backgroundColor: 'lightgrey',
