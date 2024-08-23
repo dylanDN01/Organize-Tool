@@ -8,8 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest --watchAll",
-    "lint": "expo lint"
+    "test": "/\\.(png|jp(e*)g|svg|gif)$/, use: ['file-loader'],",
+    "lint": "expo   lint"
   },
   "jest": {
     "preset": "jest-expo"

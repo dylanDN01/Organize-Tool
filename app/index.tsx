@@ -1,19 +1,37 @@
 
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Pressable} from 'react-native';
+import {TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Pressable} from 'react-native';
 
 import Task from '../components/task.js';
-import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 
 const screenWidth = Dimensions.get('screen').width;
 const screenHeight = Dimensions.get('screen').height;
 
+import settingsIcon from '../assets/images/Gear-icon.png'
+
 export default function Index() {
-  const [task, setTask] = useState("");
+  const [task, setTask] = useState(""); // add tasks
 
-  const [taskItems, setTaskItems] = useState<Array<string>>([]);
+  const [viewSettings, setViewSettings] = useState(false); // settings
 
-  var selecting = false; // for doing action on tasks
+  const [selectedItems, setSelectedItems] = useState<any[]>([]); // press and hold to select
+
+  const [taskItems, setTaskItems] = useState<any[]>([]); // list of items
+
+  const [selecting, setSelecting] = useState(false); // for press and hold to select state
+
+
+  
+
+  const handleViewSettings = () => {
+    Keyboard.dismiss();
+    setViewSettings(true);
+  }
+
+  const handleExitSettings = () => {
+    Keyboard.dismiss();
+    setViewSettings(false); 
+  }
 
   const handleAddTask = () => {
     Keyboard.dismiss();
@@ -22,31 +40,109 @@ export default function Index() {
 
   }
 
+  // delete task at index:
+   /*let itemsCopy = [...taskItems];
+    itemsCopy.splice(index, 1)
+    setTaskItems(itemsCopy);
+    */
+
+
+  // this function will highlight the task, add options at the top to delete,rename, etc,
+  // while in this mode, other tasks can be tapped to be highlighted (added to array)
+  // renaming option is removed when more than 1 task is highlighted
+  // cancelling should clear the selectedItems array, 
+  // deleting should also clear the selecteditems array, and the objects in the array of taskitems
+  // add it to the array if its not in there, otherwise remove the highlight and remove from selectedarray
   const editTask = (index: any) => {
-    selecting = true;
-    console.log(taskItems.at(index))
+    if (!selecting) {
+      setSelecting(true)
+    }
+    if (!selectedItems.includes(index)){
+      setSelectedItems(selectedItems => ([...selectedItems, index]))
+    }
   }
+  
+
+  const addRemoveSelected = (index: any) => {
+    if (selecting) {
+      if (selectedItems.includes(index)){
+        let selectedCopy = [...selectedItems];
+        let itemToRemove = selectedCopy.indexOf(index);
+        selectedCopy.splice(itemToRemove, 1);
+        setSelectedItems([...selectedCopy]);
+      }
+      else if (!selectedItems.includes(index)) {
+        setSelectedItems(selectedItems => ([...selectedItems, index]));
+      }
+    }
+    if (selectedItems.length === 0) {
+      setSelectedItems([]);
+      setSelecting(false);
+    }
+
+    console.log(selecting);
+    console.log(selectedItems);
+  }
+
+
 
   return (
     <View style = {styles.container} >
       {/* Todays Tasks */}
 
       <View style = {styles.taskWrapper}>
-        <Text style = {styles.sectionTitle}> Todays Tasks </Text>
+        <View style = {styles.header}>
+          <Text style = {styles.sectionTitle}>List</Text>
+          <TouchableOpacity onPress={() => handleViewSettings()}>
+            <Image style = {styles.settingsIconStyle} source = {settingsIcon}/>
+          </TouchableOpacity>
+
+          {viewSettings && 
+          (
+          <TouchableWithoutFeedback>
+            <View style = {styles.viewOptions}>
+              <Text style = {{fontSize: 24}}>
+                Settings
+              </Text>
+              <TouchableOpacity  onPress={() => handleExitSettings()} style = {styles.closeSettings}>
+                <Text style = {styles.exitStyle}>
+                  X
+                </Text>
+              </TouchableOpacity>
+              <View style = {styles.settingsOption}>
+                <Text>
+                  Change Theme
+                </Text>
+              </View>
+              <View style = {styles.settingsOption}>
+                <Text>
+                  Reset All
+                </Text>
+              </View>
+              <View style = {styles.settingsOption}>
+                <Text>
+                  Check 
+                </Text>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>)}
+        </View>
 
         <View style = {styles.items}>
 
         {/* item is the default for objects in array, index is default for index*/}
         {taskItems.map((item, index) => {
           return (
-            <Pressable key={index} onLongPress={() => editTask(index)}>
+            <TouchableOpacity key={index} 
+              onLongPress={() => editTask(index)} 
+              onPress={() => addRemoveSelected(index)} 
+              style = {selectedItems.includes(index) && styles.selectedItem}
+              
+              >
               <Task text={item} />
-            </Pressable>
-            
-            
+            </TouchableOpacity>
           );
-        }
-          
+        }    
 
         )}
 
@@ -54,32 +150,80 @@ export default function Index() {
       </View>
 
       {/* Create tasks */}
-      <GestureHandlerRootView>
-        <KeyboardAvoidingView 
-          behavior = {Platform.OS === 'ios' ? 'padding' : 'height'}
-          style = {styles.writeTaskWrapper}>
-          <TextInput style = {styles.input} 
-                      placeholder={'Add a task'} 
-                      value = {task}
-                      onChangeText={text => setTask(text)}/>
 
-          <TouchableOpacity onPress={() => handleAddTask()}>
-            <View style = {styles.addWrapper}>
-              <Text style = {styles.addText}>+</Text>
-            </View>
-          </TouchableOpacity>
+      <KeyboardAvoidingView 
+        behavior = {Platform.OS === 'ios' ? 'padding' : 'height'}
+        style = {styles.writeTaskWrapper}>
+        <TextInput style = {styles.input} 
+                    placeholder={'Add a task'} 
+                    value = {task}
+                    onChangeText={text => setTask(text)}/>
 
-        </KeyboardAvoidingView>
-      </GestureHandlerRootView>
+        <TouchableOpacity onPress={() => handleAddTask()}>
+          <View style = {styles.addWrapper}>
+            <Text style = {styles.addText}>+</Text>
+          </View>
+        </TouchableOpacity>
 
-      <View>
-        
-      </View>
+      </KeyboardAvoidingView>
+
+
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  selectedItem: {
+    borderWidth: 3,
+    borderColor: 'blue',
+  },
+  settingsOption: {
+    backgroundColor: 'white',
+    borderRadius: 5,
+    
+  },
+  exitStyle: {
+    fontWeight: 'bold',
+    fontSize: 24,
+  },
+  closeSettings: {
+    backgroundColor: '#ff3e00',
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+
+    position: 'absolute',
+    right: 0,
+  },
+  viewOptions: {
+    backgroundColor: 'lightgrey',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'column',
+    width: screenWidth * 0.7,
+    height: screenHeight * 0.23,
+    position: 'absolute',
+    top: screenHeight * 0.1,
+    left: screenWidth * 0.12,
+    zIndex: 3,
+    borderWidth: 3,
+    borderColor: 'gray',
+    paddingTop: 4,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems:  'center',
+    justifyContent: 'space-between'
+  },
+  settingsIconStyle: {
+    height: 40,
+    width: 40,
+  },  
   addWrapper: {
     width: 60,
     height: 60,
