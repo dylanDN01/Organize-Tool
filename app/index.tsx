@@ -37,7 +37,10 @@ export default function Index() {
 
   const [isShiftingPriority, setIsShiftingPriority] = useState(false); // for shifting priority
 
+  const [title, setTitle] = useState("List"); // change list title
+
   const handleViewSettings = () => {
+    cancel()
     Keyboard.dismiss();
     setViewSettings(true);
   }
@@ -233,7 +236,10 @@ export default function Index() {
       <View style = {styles.taskWrapper}>
         <View style = {styles.header}>
 
-          <Text style = {styles.sectionTitle}>List</Text>
+
+          <Text style = {styles.sectionTitle}>{title}</Text>
+
+          
 
           {selecting && <View style = {styles.selectOptions}>
 
@@ -285,12 +291,14 @@ export default function Index() {
               </TouchableOpacity>
               <View style = {styles.settingsOption}>
                 <Text>
-                  Change Theme
-                </Text>
+                  Change Title (Auto Saved)
+                </Text> 
+                <TextInput placeholder='New Title Here...' onChangeText = {text => setTitle(text)}></TextInput>
               </View>
+              
               <View style = {styles.settingsOption}>
                 <Text>
-                  None
+                  Change List
                 </Text>
               </View>
             </View>
@@ -379,6 +387,7 @@ const styles = StyleSheet.create({
     height: screenHeight * 0.06,
     left: '30%',
     top: '8%',
+    zIndex: 997,
   },
   actionButtonModify: {
     position: 'absolute', 
@@ -438,7 +447,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 5,
     width: '50%',
-    height: '5%',
+    height: '6%',
     alignItems: 'center',
     justifyContent: 'center',
   },
