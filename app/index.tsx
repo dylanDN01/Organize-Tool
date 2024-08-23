@@ -1,6 +1,6 @@
 
 import React, {useState} from 'react';
-import {TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Pressable} from 'react-native';
+import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Pressable} from 'react-native';
 
 import Task from '../components/task.js';
 
@@ -8,6 +8,9 @@ const screenWidth = Dimensions.get('screen').width;
 const screenHeight = Dimensions.get('screen').height;
 
 import settingsIcon from '../assets/images/Gear-icon.png'
+import trashIcon from '../assets/images/trash-bin.png'
+import checkIcon from '../assets/images/check-all.png'
+import cancelIcon from '../assets/images/cancel.png'
 
 export default function Index() {
   const [task, setTask] = useState(""); // add tasks
@@ -20,7 +23,7 @@ export default function Index() {
 
   const [selecting, setSelecting] = useState(false); // for press and hold to select state
 
-
+  const [checkAll, setCheckAll] = useState<boolean>(false);
   
 
   const handleViewSettings = () => {
@@ -40,19 +43,10 @@ export default function Index() {
 
   }
 
-  // delete task at index:
-   /*let itemsCopy = [...taskItems];
-    itemsCopy.splice(index, 1)
-    setTaskItems(itemsCopy);
-    */
 
 
   // this function will highlight the task, add options at the top to delete,rename, etc,
-  // while in this mode, other tasks can be tapped to be highlighted (added to array)
   // renaming option is removed when more than 1 task is highlighted
-  // cancelling should clear the selectedItems array, 
-  // deleting should also clear the selecteditems array, and the objects in the array of taskitems
-  // add it to the array if its not in there, otherwise remove the highlight and remove from selectedarray
   const editTask = (index: any) => {
     if (!selecting) {
       setSelecting(true)
@@ -70,18 +64,27 @@ export default function Index() {
         let itemToRemove = selectedCopy.indexOf(index);
         selectedCopy.splice(itemToRemove, 1);
         setSelectedItems([...selectedCopy]);
+
+        // actually no clue why its <= 1 and not 0; but it works
+        if (selectedItems.length <= 1) {
+          cancel();
+        }
       }
       else if (!selectedItems.includes(index)) {
         setSelectedItems(selectedItems => ([...selectedItems, index]));
       }
     }
-    if (selectedItems.length === 0) {
-      setSelectedItems([]);
-      setSelecting(false);
-    }
+  }
 
-    console.log(selecting);
-    console.log(selectedItems);
+  const cancel = () => {
+    setSelectedItems([]);
+    setSelecting(false);    
+  }
+
+  const deleteAll = (toDelete: Array<any>) => {
+    let itemsCopy = taskItems.filter((item, index) => !toDelete.includes(index));
+    setTaskItems(itemsCopy);
+    cancel();
   }
 
 
@@ -92,7 +95,27 @@ export default function Index() {
 
       <View style = {styles.taskWrapper}>
         <View style = {styles.header}>
+
           <Text style = {styles.sectionTitle}>List</Text>
+
+          {selecting && <View style = {styles.selectOptions}>
+            <TouchableOpacity onPress = {() => deleteAll(selectedItems)} style = {{alignItems: 'center'}}>
+              <Image style = {{height: 40, width: 40}}source = {trashIcon}></Image>
+              <Text>Delete</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress = {() => setCheckAll(!checkAll)} style = {{alignItems: 'center'}}>
+              <Image style = {{height: 40, width: 40}}source = {checkIcon}/>
+              <Text>Check All</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress = {() => cancel()}style = {{alignItems: 'center'}}>
+              <Image style = {{height: 40, width: 40}} source = {cancelIcon}/>
+              <Text>Cancel</Text>
+            </TouchableOpacity>
+          </View>}
+
+
           <TouchableOpacity onPress={() => handleViewSettings()}>
             <Image style = {styles.settingsIconStyle} source = {settingsIcon}/>
           </TouchableOpacity>
@@ -139,7 +162,7 @@ export default function Index() {
               style = {selectedItems.includes(index) && styles.selectedItem}
               
               >
-              <Task text={item} />
+              <Task task={item} isChecked = {checkAll} />
             </TouchableOpacity>
           );
         }    
@@ -174,6 +197,11 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  selectOptions: {
+    flexDirection: 'row',
+    width: '50%',
+    justifyContent: 'space-between'
+  },
   selectedItem: {
     borderWidth: 3,
     borderColor: 'blue',
@@ -204,12 +232,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'column',
-    width: screenWidth * 0.7,
-    height: screenHeight * 0.23,
+    width: '100%',
+    height: screenHeight * 0.85,
+
     position: 'absolute',
-    top: screenHeight * 0.1,
-    left: screenWidth * 0.12,
-    zIndex: 3,
+    top: 0,
+    left: 0,
+    zIndex: 999 ,
+    
     borderWidth: 3,
     borderColor: 'gray',
     paddingTop: 4,

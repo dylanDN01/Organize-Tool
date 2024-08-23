@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
-const Task = (task) => {
+const Task = ({task, isChecked}) => {
 
     const [checked, setChecked] = useState(false);
 
@@ -14,10 +14,10 @@ const Task = (task) => {
         <View style = {styles.item}>
             <View style = {styles.itemLeft}>
                 <TouchableOpacity style = {styles.checkBox} onPress={() => handleSetCheck()}>
-                    {checked && <Text style = {styles.check}>✓</Text>}
+                    {(isChecked || checked) && <Text style = {styles.check}>✓</Text>}
                 </TouchableOpacity>
              
-                <Text style = {styles.itemText}>{task.text}</Text>
+                <Text style = {styles.itemText}>{task}</Text>
             </View>   
 
             <View style = {styles.circular}>
