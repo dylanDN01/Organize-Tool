@@ -16,6 +16,8 @@ import selectAllIcon from '../assets/images/select-all.png'
 import editIcon from '../assets/images/edit-icon.png'
 import upArrow from '../assets/images/uparrow.png'
 import downArrow from '../assets/images/downarrow.png'
+import importIcon from '../assets/images/import.png'
+import exportIcon from '../assets/images/export.png'
 
 export default function Index() {
   const [task, setTask] = useState(""); // add tasks
@@ -296,11 +298,19 @@ export default function Index() {
                 <TextInput placeholder='New Title Here...' onChangeText = {text => setTitle(text)}></TextInput>
               </View>
               
-              <View style = {styles.settingsOption}>
+              <TouchableOpacity style = {styles.settingsOption}>
+                <Image source = {importIcon} style = {styles.selectingToolIcon}/>
                 <Text>
-                  Change List
+                  Open List (from files)
                 </Text>
-              </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity style = {styles.settingsOption}>
+                <Image source = {exportIcon} style = {styles.selectingToolIcon}/>
+                <Text>
+                  Download List (to files)
+                </Text>
+              </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>)}
         </View>
