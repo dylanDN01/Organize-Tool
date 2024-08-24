@@ -1,6 +1,8 @@
-export {};
-import React, {createContext, useState} from 'react';
+
+import React, { useState, useEffect} from 'react';
 import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard} from 'react-native';
+
+import * as SQLite from 'expo-sqlite'; //databasing
 
 import Task from '../components/task.js';
 
@@ -20,17 +22,52 @@ import importIcon from '../assets/images/import.png'
 import exportIcon from '../assets/images/export.png'
 
 export default function Index() {
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  // loading screen
+  if (isLoading) {
+    return (
+      <View style = {{alignItems: 'center', justifyContent: 'center', flex: 1}}>
+        <Text style = {{fontSize: 40}}>Loading...</Text>
+      </View>
+    );
+  }
+
+  const exampleDataBase: { [key: number]: { task: string; checked: number; } }= {
+    0: {
+      task: "Hello",
+      checked: 1,
+    },
+    1: {
+      task: "Stop",
+      checked: 0,
+    },
+    2: {
+      task: "Go",
+      checked: 1,
+    }
+  };
+
+//  const jsonString = JSON.stringify(exampleDataBase);
+
+
+
+
+  
+
+
   const [task, setTask] = useState(""); // add tasks
 
   const [viewSettings, setViewSettings] = useState(false); // settings
 
   const [selectedItems, setSelectedItems] = useState<any[]>([]); // press and hold to select
 
-  const [taskItems, setTaskItems] = useState<any[]>([]); // list of items
+  const [taskItems, setTaskItems] = useState<any[]>([]); // list of items (NEED THIS FOR DATABASE)
 
   const [selecting, setSelecting] = useState(false); // for press and hold to select state
 
-  const [checkAll, setCheckAll] = useState<any[]>([]); // for checking all selected items
+  const [checkAll, setCheckAll] = useState<any[]>([]); // for checking all selected items (NEED THIS FOR DATABASE)
 
   const [selectedIndex, setSelectedIndex] = useState(-1); // for modifying text
 
@@ -160,13 +197,25 @@ export default function Index() {
     }
   }
 
-  const shiftItem = (indexOld: any, indexNew: any) => {
+  const shiftItem = (indexOld: number, indexNew: number) => {
     let tasksCopy = [...taskItems];
     
     if (indexNew > -1 && indexNew < taskItems.length){
       let tempTask = tasksCopy[indexNew];
       tasksCopy[indexNew] = tasksCopy[indexOld];
       tasksCopy[indexOld] = tempTask;
+      
+      // move the checkmarks too (swap if needed)
+      let checkMoved = checkAll;
+      if (!(checkMoved.includes(indexNew)) && checkMoved.includes(indexOld)) {
+        checkMoved[checkMoved.indexOf(indexOld)] = indexNew;
+      }
+      else if (checkMoved.includes(indexNew) && !checkMoved.includes(indexOld)){
+        checkMoved[checkMoved.indexOf(indexNew)] = indexOld;
+      }
+
+      
+      setCheckAll(checkMoved);
 
       setSelectedIndex(indexNew);
     }
@@ -188,7 +237,43 @@ export default function Index() {
     }
   }
 
-  
+  // this function should:
+  //  open file explorer,
+  // accept a JSON file (only),
+  // convert the JSON to a dictionary,
+  // initialize the list,
+  // change the title to the file name
+  const loadFromDictionary = (dictionary: any) => {
+    let newTaskItems: string[] = []
+    let newCheckedItems: number[] = []
+    for (const key in dictionary){
+      const entry = dictionary[key];
+      newTaskItems.push(entry.task);
+      
+      if (entry.checked === 1){
+        newCheckedItems.push(Number(key));
+      } 
+    }
+    setCheckAll(newCheckedItems);
+    setTaskItems(newTaskItems); 
+  }
+
+  // this function should:
+  // convert all the task items into a dictionary,
+  // parse it into a JSON file,
+  // download the JSON file, with the name as the title of the list
+
+  const downloadList = () => {
+    // convert to dictionary
+    let dictToJSON: any = [];
+    for (let i = 0; i < taskItems.length; i++) {
+      dictToJSON[i] = {
+        task: taskItems[i],
+        checked: checkAll.includes(i)
+      };
+    }
+    console.log(dictToJSON);
+  }
 
 
   return (
@@ -298,14 +383,14 @@ export default function Index() {
                 <TextInput placeholder='New Title Here...' onChangeText = {text => setTitle(text)}></TextInput>
               </View>
               
-              <TouchableOpacity style = {styles.settingsOption}>
+              <TouchableOpacity onPress={() => loadFromDictionary(exampleDataBase)} style = {styles.settingsOption}>
                 <Image source = {importIcon} style = {styles.selectingToolIcon}/>
                 <Text>
                   Open List (from files)
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style = {styles.settingsOption}>
+              <TouchableOpacity onPress = {() => downloadList()} style = {styles.settingsOption}>
                 <Image source = {exportIcon} style = {styles.selectingToolIcon}/>
                 <Text>
                   Download List (to files)
