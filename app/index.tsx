@@ -1,8 +1,11 @@
 
-import React, { useState, useEffect} from 'react';
+import React, { useState} from 'react';
 import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard} from 'react-native';
 
-import * as SQLite from 'expo-sqlite'; //databasing
+
+
+import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
 
 import Task from '../components/task.js';
 
@@ -23,37 +26,9 @@ import exportIcon from '../assets/images/export.png'
 
 export default function Index() {
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  // loading screen
-  if (isLoading) {
-    return (
-      <View style = {{alignItems: 'center', justifyContent: 'center', flex: 1}}>
-        <Text style = {{fontSize: 40}}>Loading...</Text>
-      </View>
-    );
-  }
-
-  const exampleDataBase: { [key: number]: { task: string; checked: number; } }= {
-    0: {
-      task: "Hello",
-      checked: 1,
-    },
-    1: {
-      task: "Stop",
-      checked: 0,
-    },
-    2: {
-      task: "Go",
-      checked: 1,
-    }
-  };
-
-//  const jsonString = JSON.stringify(exampleDataBase);
 
 
-
-
+  const { StorageAccessFramework } = FileSystem; // storage management
   
 
 
@@ -243,17 +218,41 @@ export default function Index() {
   // convert the JSON to a dictionary,
   // initialize the list,
   // change the title to the file name
-  const loadFromDictionary = (dictionary: any) => {
+
+  const uploadList = async () => {
+
+    try {
+      const result: any = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+      });
+      const fileUri = result.assets[0].uri;
+      const fileName = result.assets[0].name;
+
+      const fileContents = await FileSystem.readAsStringAsync(fileUri, {encoding: FileSystem.EncodingType.UTF8});
+      const jsonData = JSON.parse(fileContents);
+      loadFromJson(jsonData, fileName); // json is a dictionary
+    }
+    catch{
+      console.error('Error reading or parsing file');
+      return;
+    }
+    
+
+  }
+
+  const loadFromJson = (dictionary: any, listName: string) => {
+
     let newTaskItems: string[] = []
     let newCheckedItems: number[] = []
     for (const key in dictionary){
       const entry = dictionary[key];
       newTaskItems.push(entry.task);
       
-      if (entry.checked === 1){
+      if (entry.checked === true){
         newCheckedItems.push(Number(key));
       } 
     }
+    setTitle(listName.substring(0, listName.length - 5));
     setCheckAll(newCheckedItems);
     setTaskItems(newTaskItems); 
   }
@@ -263,16 +262,36 @@ export default function Index() {
   // parse it into a JSON file,
   // download the JSON file, with the name as the title of the list
 
-  const downloadList = () => {
-    // convert to dictionary
-    let dictToJSON: any = [];
-    for (let i = 0; i < taskItems.length; i++) {
-      dictToJSON[i] = {
-        task: taskItems[i],
-        checked: checkAll.includes(i)
-      };
+  const downloadList = async () => {
+    const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+    if (permissions.granted){
+      // convert to dictionary
+      let dictToJSON: any = [];
+      for (let i = 0; i < taskItems.length; i++) {
+        dictToJSON[i] = {
+          task: taskItems[i],
+          checked: checkAll.includes(i)
+        };
+      }
+      // change the type to a JSON
+      dictToJSON = JSON.stringify(dictToJSON);
+
+      const directoryUri = permissions.directoryUri;
+      const fileUri = await StorageAccessFramework.createFileAsync(
+        directoryUri,
+        title.toString(),
+        'application/json'
+      );
+
+      await FileSystem.writeAsStringAsync(fileUri, dictToJSON, { encoding: FileSystem.EncodingType.UTF8});
+      
     }
-    console.log(dictToJSON);
+    
+
+    
+
+    
   }
 
 
@@ -383,7 +402,7 @@ export default function Index() {
                 <TextInput placeholder='New Title Here...' onChangeText = {text => setTitle(text)}></TextInput>
               </View>
               
-              <TouchableOpacity onPress={() => loadFromDictionary(exampleDataBase)} style = {styles.settingsOption}>
+              <TouchableOpacity onPress = {() => uploadList()} style = {styles.settingsOption}>
                 <Image source = {importIcon} style = {styles.selectingToolIcon}/>
                 <Text>
                   Open List (from files)
