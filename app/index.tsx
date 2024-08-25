@@ -1,6 +1,6 @@
 
 import React, { useState} from 'react';
-import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard} from 'react-native';
+import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Alert} from 'react-native';
 
 
 
@@ -30,8 +30,6 @@ export default function Index() {
 
   const { StorageAccessFramework } = FileSystem; // storage management
   
-
-
   const [task, setTask] = useState(""); // add tasks
 
   const [viewSettings, setViewSettings] = useState(false); // settings
@@ -266,6 +264,7 @@ export default function Index() {
     const permissions = await StorageAccessFramework.requestDirectoryPermissionsAsync();
 
     if (permissions.granted){
+      const directoryUri = permissions.directoryUri; // set directory
       // convert to dictionary
       let dictToJSON: any = [];
       for (let i = 0; i < taskItems.length; i++) {
@@ -276,22 +275,80 @@ export default function Index() {
       }
       // change the type to a JSON
       dictToJSON = JSON.stringify(dictToJSON);
-
-      const directoryUri = permissions.directoryUri;
-      const fileUri = await StorageAccessFramework.createFileAsync(
-        directoryUri,
-        title.toString(),
-        'application/json'
-      );
-
-      await FileSystem.writeAsStringAsync(fileUri, dictToJSON, { encoding: FileSystem.EncodingType.UTF8});
       
+      // create the URI ( problem is here )
+
+      const uriDir = await StorageAccessFramework.readDirectoryAsync(directoryUri);
+
+      let foundCopy = false;
+      // search for existing uri
+      uriDir.forEach(async element => {
+        let fileName = title + ".json";
+        if (element.includes(fileName)) {
+          let uri = element;
+          foundCopy = true;
+          await Alert.alert(
+            'Existing List Found',
+            'A file with the same name already exists. Do you want to overwrite it?',
+            [
+              {
+                text: "Overwrite",
+                onPress: () => {handleOverwrite(2, dictToJSON, directoryUri, uri)
+
+                }
+              },
+              {
+                text: "Make New",
+                onPress: () => {handleOverwrite(1, dictToJSON, directoryUri, uri)
+
+                }
+              },
+              {
+                text: "Cancel", 
+                onPress: () => {return;}
+                
+              }
+            ]
+          );
+        }
+      });
+      
+      // create a new file 
+      if (!foundCopy) {
+        const uri = await StorageAccessFramework.createFileAsync(
+          directoryUri,
+          title.toString(),
+          'application/json',
+        );
+        await FileSystem.writeAsStringAsync(uri, dictToJSON, { encoding: FileSystem.EncodingType.UTF8}); 
+      } 
     }
-    
+  }
 
-    
 
-    
+
+  const handleOverwrite = async (value: number,dictToJSON: any, directoryUri: any, uri : string) => {
+
+    try{
+      // uri is already set to handle overwriting
+      if (value === 2) {  
+
+        await  FileSystem.writeAsStringAsync(uri, dictToJSON, { encoding: FileSystem.EncodingType.UTF8}); 
+      }
+      else if (value === 1) {
+        // this works as intended
+
+        const uri = await StorageAccessFramework.createFileAsync(
+          directoryUri,
+          title.toString(),
+          'application/json',
+        );
+        await FileSystem.writeAsStringAsync(uri, dictToJSON, { encoding: FileSystem.EncodingType.UTF8}); 
+      }
+    }
+    catch{
+      return;
+    } 
   }
 
 
