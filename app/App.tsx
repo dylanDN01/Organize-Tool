@@ -1,5 +1,5 @@
-import React, { useState} from 'react';
-import {ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Alert} from 'react-native';
+import React, {useRef, useEffect, useState} from 'react';
+import {AppState, ScrollView, TouchableWithoutFeedback, TouchableOpacity, Image, View, Text, StyleSheet, Dimensions, KeyboardAvoidingView, Platform, TextInput, Keyboard, Alert} from 'react-native';
 
 import * as FileSystem from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
@@ -222,14 +222,20 @@ export default function App() {
       const result: any = await DocumentPicker.getDocumentAsync({
         type: 'application/json',
       });
+
       const fileUri = result.assets[0].uri;
+      
       const fileName = result.assets[0].name;
 
       const fileContents = await FileSystem.readAsStringAsync(fileUri, {encoding: FileSystem.EncodingType.UTF8});
+
+
       const jsonData = JSON.parse(fileContents);
+
       loadFromJson(jsonData, fileName); // json is a dictionary
     }
     catch{
+
       return;
     }
     
@@ -285,6 +291,7 @@ export default function App() {
         let fileName = title;
         fileName = fileName.replaceAll(" ", "%20"); // SAF URI compatibility
         fileName = fileName.replaceAll("/", '%2F');
+        fileName = fileName + ".json";
         
         if (element.includes(fileName) && !foundCopy) {
           let uri = element;
@@ -313,6 +320,8 @@ export default function App() {
               }
             ]
           );
+          
+
         }
       });
       
@@ -336,7 +345,7 @@ export default function App() {
     try{
       // uri is already set to handle overwriting
       if (value === 2) {  
-        console.log(uri);
+
         await  FileSystem.writeAsStringAsync(uri, dictToJSON, { encoding: FileSystem.EncodingType.UTF8}); 
       }
       else if (value === 1) {
@@ -588,7 +597,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   check: {
-    fontSize: 20,
+    fontSize: screenHeight * 0.014,
     color: 'black',
     fontWeight: 'bold',
 },
