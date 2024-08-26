@@ -248,6 +248,7 @@ export default function App() {
         newCheckedItems.push(Number(key));
       } 
     }
+
     setTitle(listName.substring(0, listName.length - 5));
     setCheckAll(newCheckedItems);
     setTaskItems(newTaskItems); 
@@ -282,9 +283,13 @@ export default function App() {
       // search for existing uri
       uriDir.forEach(async element => {
         let fileName = title;
-        if (element.includes(fileName)) {
+        fileName = fileName.replaceAll(" ", "%20"); // SAF URI compatibility
+        fileName = fileName.replaceAll("/", '%2F');
+        
+        if (element.includes(fileName) && !foundCopy) {
           let uri = element;
           foundCopy = true;
+
           await Alert.alert(
             'Existing List Found',
             'A file with the same name already exists. Do you want to overwrite it?',
@@ -292,7 +297,7 @@ export default function App() {
               {
                 text: "Overwrite",
                 onPress: () => {handleOverwrite(2, dictToJSON, directoryUri, uri)
-
+                  return;
                 }
               },
               {
@@ -381,17 +386,17 @@ export default function App() {
 
         <TouchableOpacity onPress = {() => shiftItem(selectedIndex, selectedIndex -1)} style = {{alignItems: 'center'}}>
           <Image source = {upArrow} style = {styles.selectingToolIcon}/>
-          <Text>Move Up</Text>
+          <Text style = {{fontSize: screenHeight * 0.015}}>Up</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress = {() => shiftItem(selectedIndex, selectedIndex + 1)} style = {{alignItems: 'center'}}>
           <Image source = {downArrow} style = {styles.selectingToolIcon}/>
-          <Text>Move Down</Text>
+          <Text style = {{fontSize: screenHeight * 0.015}}>Down</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress = {() => cancel()} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {cancelIcon}/>
-              <Text>Cancel</Text>
+              <Text style = {{fontSize: screenHeight * 0.015}}>Cancel</Text>
         </TouchableOpacity>
       </View>
       }
@@ -408,29 +413,27 @@ export default function App() {
 
             {(selectedItems.length === 1) && <TouchableOpacity onPress = {() => setIsEditingText(true)} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {editIcon}></Image>
-              <Text>Edit</Text>
+              <Text style = {{fontSize: screenHeight * 0.015}}>Edit</Text>
             </TouchableOpacity>}
 
             <TouchableOpacity onPress ={() => handleSelectAll()} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {selectAllIcon}/>
-              <Text>Select All</Text>
+              <Text style = {{fontSize: screenHeight * 0.015}}>Select</Text>
             </TouchableOpacity>
             
             <TouchableOpacity onPress = {() => handleCheckAll()} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {checkIcon}/>
-              <Text>Check</Text>
+              <Text style = {{fontSize: screenHeight * 0.015}}>Check</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress = {() => cancel()} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {cancelIcon}/>
-              <Text>Cancel</Text>
+              <Text style = {{fontSize: screenHeight * 0.015}}>Cancel</Text>
             </TouchableOpacity>
-            
-
 
             <TouchableOpacity onPress = {() => deleteAll(selectedItems)} style = {{alignItems: 'center'}}>
               <Image style = {styles.selectingToolIcon} source = {trashIcon}></Image>
-              <Text>Delete</Text>
+              <Text style = {{fontSize: screenHeight * 0.015}}>Delete</Text>
             </TouchableOpacity>
 
           </View>}
@@ -453,10 +456,13 @@ export default function App() {
                 </Text>
               </TouchableOpacity>
               <View style = {styles.settingsOption}>
+                <View>
                 <Text>
                   Change Title (Auto Saved)
                 </Text> 
                 <TextInput placeholder='New Title Here...' onChangeText = {async text => await  setTitle(text)}></TextInput>
+                </View>
+
               </View>
               
               <TouchableOpacity onPress = {() => uploadList()} style = {styles.settingsOption}>
@@ -513,7 +519,7 @@ export default function App() {
 
       {/* Create tasks */}
 
-      <KeyboardAvoidingView 
+      {!isEditingText && <KeyboardAvoidingView 
         behavior = {Platform.OS === 'ios' ? 'padding' : 'height'}
         style = {styles.writeTaskWrapper}>
         <TextInput style = {styles.input} 
@@ -527,7 +533,7 @@ export default function App() {
           </View>
         </TouchableOpacity>
 
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingView>}
 
 
     </View>
@@ -540,8 +546,8 @@ const styles = StyleSheet.create({
     borderColor: 'orange',
   },
   circular: {
-    width: 25,
-    height: 35,
+    width: screenHeight * 0.03,
+    height: screenHeight * 0.04,
     borderColor: 'lightgray',
     borderWidth: 3,
     borderRadius: 6
@@ -550,13 +556,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 3,
     backgroundColor: 'white',
     borderRadius: 6,
     borderWidth: 3,
-    width: '50%',
-    height: screenHeight * 0.06,
-    left: '30%',
+    borderColor: 'orange',
+    width: '70%',
+    height: screenHeight * 0.07,
+    left: '25%',
     top: '8%',
     zIndex: 997,
   },
@@ -585,8 +593,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
 },
   checkBox: {
-    width: 32,
-    height: 32,
+    width: screenHeight * 0.03,
+    height: screenHeight * 0.03,
     backgroundColor: 'lightgray',
     justifyContent: 'center',
     alignItems: 'center',
@@ -595,33 +603,34 @@ const styles = StyleSheet.create({
     marginRight: 15,
 },
   selectingToolIcon: {
-    height: 30,
-    width: 30,
+    height: screenHeight * 0.03,
+    width: screenHeight * 0.03,
   },
   selectOptions: {
     flexDirection: 'row',
     width: '70%',
     justifyContent: 'space-between',
     position: 'absolute',
-    left: '15%',
+    left: '25%',
     backgroundColor: 'white',
     padding: 4,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: 'blue'
+    borderColor: 'blue',
+    zIndex: 990,
   },
   selectedItem: {
     borderWidth: 3,
     borderColor: 'blue',
   },
+
   settingsOption: {
-    backgroundColor: 'white',
-    borderRadius: 5,
     width: '50%',
     height: '6%',
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   exitStyle: {
     fontWeight: 'bold',
     fontSize: 24,
