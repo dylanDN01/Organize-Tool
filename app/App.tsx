@@ -234,8 +234,8 @@ export default function App() {
 
       loadFromJson(jsonData, fileName); // json is a dictionary
     }
-    catch{
-
+    catch (error){
+      console.log(error);
       return;
     }
     
@@ -243,6 +243,7 @@ export default function App() {
   }
 
   const loadFromJson = (dictionary: any, listName: string) => {
+
 
     let newTaskItems: string[] = []
     let newCheckedItems: number[] = []
@@ -343,10 +344,16 @@ export default function App() {
   const handleOverwrite = async (value: number,dictToJSON: any, directoryUri: any, uri : string) => {
 
     try{
-      // uri is already set to handle overwriting
       if (value === 2) {  
 
-        await  FileSystem.writeAsStringAsync(uri, dictToJSON, { encoding: FileSystem.EncodingType.UTF8}); 
+        await FileSystem.deleteAsync(uri);
+
+        const uriNew  = await StorageAccessFramework.createFileAsync(
+          directoryUri,
+          title.toString(),
+          'application/json',
+        );
+        await  FileSystem.writeAsStringAsync(uriNew, dictToJSON, { encoding: FileSystem.EncodingType.UTF8}); 
       }
       else if (value === 1) {
         // this works as intended
